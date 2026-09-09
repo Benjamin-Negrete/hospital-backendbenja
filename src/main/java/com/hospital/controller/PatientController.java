@@ -18,7 +18,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
 @RequestMapping("/api/v1/patients")
-@CrossOrigin(origins = "*", allowedHeaders = "*")
 @Tag(name = "Patients", description = "Operaciones relacionadas con los pacientes")
 public class PatientController {
 
