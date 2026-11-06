@@ -16,6 +16,9 @@ public class PatientService {
     @Autowired
     private PatientRepository patientRepository;
 
+    @Autowired(required = false)
+    private HospitalMessageProducer messageProducer;
+
     public List<Patient> findAll() {
         return patientRepository.findAll();
     }
@@ -26,7 +29,19 @@ public class PatientService {
     }
 
     public Patient save(Patient patient) {
-        return patientRepository.save(patient);
+        Patient saved = patientRepository.save(patient);
+        if (messageProducer != null) {
+            try {
+                com.hospital.dto.MessagePayloadDTO msg = com.hospital.dto.MessagePayloadDTO.builder()
+                    .content("Nuevo paciente registrado: " + saved.getFirstName() + " " + saved.getLastName() + " (RUT: " + saved.getRut() + ")")
+                    .recipient(saved.getEmail())
+                    .build();
+                messageProducer.sendNotification(msg);
+            } catch (Exception ex) {
+                // Desacoplado: no bloquea la persistencia del paciente
+            }
+        }
+        return saved;
     }
 
     public void deleteById(Long id) {

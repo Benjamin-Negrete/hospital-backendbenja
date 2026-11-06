@@ -21,6 +21,13 @@ public class ApiResponseDTO<T> {
         this.data = data;
     }
 
+    public ApiResponseDTO(String status, String message, T data) {
+        this.ok = "SUCCESS".equalsIgnoreCase(status);
+        this.statusCode = this.ok ? 200 : 400;
+        this.message = message;
+        this.data = data;
+    }
+
     public ApiResponseDTO(boolean ok, Integer statusCode, String message, T data, Long count) {
         this.ok = ok;
         this.statusCode = statusCode;

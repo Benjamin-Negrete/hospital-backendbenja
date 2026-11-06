@@ -1,18 +1,20 @@
 version: '3.8'
 
 services:
-  # Servicio de base de datos MySQL
+  # ==========================================
+  # BASE DE DATOS MYSQL
+  # ==========================================
   mysql:
     image: mysql:8.0
     container_name: mysql_hospital
     environment:
-      MYSQL_ROOT_PASSWORD: ""          # Deja la contraseña vacía como en tu properties
-      MYSQL_DATABASE: db_hospital_vm   # Nombre de la BD que espera tu app
-      MYSQL_ALLOW_EMPTY_PASSWORD: yes  # Permite contraseña vacía (no recomendado en producción)
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_DATABASE: db_hospital_vm
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     ports:
-      - "3306:3306"                    # Expone MySQL en el puerto 3306 de tu host (opcional)
+      - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql      # Persistencia de datos
+      - mysql_data:/var/lib/mysql
     networks:
       - hospital_network
     healthcheck:
@@ -20,28 +22,69 @@ services:
       timeout: 20s
       retries: 10
 
-  # Servicio de tu aplicación Spring Boot
+  # ==========================================
+  # RABBITMQ NODO 1 (LÍDER DEL CLÚSTER)
+  # ==========================================
+  rabbitmq1:
+    image: rabbitmq:3-management
+    container_name: rabbitmq1
+    hostname: rabbitmq1
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=SECRET_CLUSTER_DUOC_2025
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin123
+    ports:
+      - "5672:5672"     # Protocolo AMQP
+      - "15672:15672"   # Management Web UI (Nodo 1)
+    networks:
+      - hospital_network
+
+  # ==========================================
+  # RABBITMQ NODO 2 (INTEGRADO AL CLÚSTER)
+  # ==========================================
+  rabbitmq2:
+    image: rabbitmq:3-management
+    container_name: rabbitmq2
+    hostname: rabbitmq2
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=SECRET_CLUSTER_DUOC_2025
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin123
+    depends_on:
+      - rabbitmq1
+    ports:
+      - "5673:5672"     # Protocolo AMQP (Nodo 2)
+      - "15673:15672"   # Management Web UI (Nodo 2)
+    networks:
+      - hospital_network
+
+  # ==========================================
+  # MICROSERVICIO SPRING BOOT
+  # ==========================================
   app:
-    build: .                           # Construye la imagen desde el Dockerfile actual
+    build: .
     container_name: hospital_app
     depends_on:
       mysql:
-        condition: service_healthy     # Espera a que MySQL esté listo
+        condition: service_healthy
+      rabbitmq1:
+        condition: service_started
     environment:
-      # Sobrescribe las propiedades de application.properties
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/db_hospital_vm?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ""
-      # Opcional: puedes desactivar la consola de Hibernate si quieres
-      # SPRING_JPA_SHOW_SQL: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq1
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
     ports:
       - "8080:8080"
     networks:
       - hospital_network
 
-# Definir volúmenes y redes
 volumes:
   mysql_data:
 
 networks:
   hospital_network:
+    driver: bridge
