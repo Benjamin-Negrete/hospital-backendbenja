@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { Patient, ApiResponseDTO } from '../types/patient';
 
 // Si la variable no existe en local, usará localhost
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const BASE_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8080' : http://:8080);
 
 // Aseguramos la barra '/' entre la URL base y el endpoint
 const API_URL = `${BASE_URL.replace(/\/$/, '')}/api/v1/patients`;
