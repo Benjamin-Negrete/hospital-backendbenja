@@ -7,8 +7,8 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 // Aseguramos la barra '/' entre la URL base y el endpoint
 const API_URL = `${BASE_URL.replace(/\/$/, '')}/api/v1/patients`;
 
-const AUTHORITY = import.meta.env.VITE_COGNITO_AUTHORITY || "https://cognito-idp.sa-east-1.amazonaws.com/sa-east-1_B3GggKnss";
-const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || "32o0rot47qlmghao6reid7ftoj";
+const AUTHORITY = import.meta.env.VITE_COGNITO_AUTHORITY || "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_OwELeaTvI";
+const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || "3f49r0c3vj5qfnslmfs5v9mvdi";
 
 const getAuthHeaders = () => {
   const oidcStorageKey = `oidc.user:${AUTHORITY}:${CLIENT_ID}`;
